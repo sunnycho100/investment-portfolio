@@ -1,33 +1,47 @@
 #!/bin/bash
 
 # Investment Portfolio Startup Script
-# This script starts the frontend development server
-# Backend connection will be added later
+# This script checks environment setup and starts the development server
 
-echo "🚀 Starting Investment Portfolio Frontend..."
-echo "📡 Starting on port 3000 (will auto-increment if busy)..."
+set -e  # Exit on error
+
+echo "🚀 Starting Investment Portfolio..."
 echo ""
 
-# Start the dev server in background and capture output
-npm run dev > /tmp/vite-output.log 2>&1 &
-SERVER_PID=$!
-
-# Wait for server to start and extract the actual port
-echo "⏳ Waiting for server to start..."
-sleep 3
-
-# Try to find the port from the log file
-PORT=$(grep -oE "Local:.*:([0-9]+)" /tmp/vite-output.log | grep -oE "[0-9]+" | tail -1)
-
-if [ -z "$PORT" ]; then
-  PORT=3000  # Fallback to default
+# Check if .env file exists
+if [ ! -f .env ]; then
+  echo "⚠️  Warning: .env file not found!"
+  echo "📝 Creating .env from .env.example..."
+  cp .env.example .env
+  echo "✅ Created .env file"
+  echo ""
+  echo "🔑 Please add your Alpha Vantage API key to .env file:"
+  echo "   VITE_ALPHA_VANTAGE_API_KEY=your_key_here"
+  echo ""
+  echo "   Get your free key at: https://www.alphavantage.co/support/#api-key"
+  echo ""
 fi
 
-echo "✅ Server started on http://localhost:$PORT"
-echo "🌐 Opening Chrome..."
+# Check if API key is set (not demo or placeholder)
+API_KEY=$(grep -E "^VITE_ALPHA_VANTAGE_API_KEY=" .env | cut -d '=' -f2)
+if [ -z "$API_KEY" ] || [ "$API_KEY" = "demo" ] || [ "$API_KEY" = "your_api_key_here" ]; then
+  echo "⚠️  Warning: Using demo API key (limited functionality)"
+  echo "   Get your free key at: https://www.alphavantage.co/support/#api-key"
+  echo "   Update .env file with your key for full access"
+  echo ""
+fi
 
-# Open Chrome to the actual port
-open -a "Google Chrome" "http://localhost:$PORT"
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+  echo "📦 Installing dependencies..."
+  npm install
+  echo "✅ Dependencies installed"
+  echo ""
+fi
 
-# Bring the server to foreground
-wait $SERVER_PID
+echo "📡 Starting development server..."
+echo "   Port: 3000 (will auto-increment if busy)"
+echo ""
+
+# Start the dev server
+npm run dev

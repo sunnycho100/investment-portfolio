@@ -1,9 +1,12 @@
 import Header from "@/components/Header";
 import PortfolioSummary from "@/components/PortfolioSummary";
 import AssetCard, { Asset } from "@/components/AssetCard";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useStockPrices } from "@/hooks/useStockPrices";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useMemo } from "react";
 
 // Mock data - will be replaced with API data
 const mockAssets: Asset[] = [
@@ -76,12 +79,23 @@ const mockAssets: Asset[] = [
 ];
 
 const Index = () => {
-  // Calculate portfolio totals
-  const totalValue = mockAssets.reduce(
+  // Fetch real-time prices
+  const { prices, loading, error, refreshPrices, lastUpdated } = useStockPrices(mockAssets);
+  
+  // Update assets with real-time prices
+  const updatedAssets: Asset[] = useMemo(() => {
+    return mockAssets.map(asset => ({
+      ...asset,
+      currentPrice: prices[asset.symbol] || asset.currentPrice,
+    }));
+  }, [prices]);
+
+  // Calculate portfolio totals using updated prices
+  const totalValue = updatedAssets.reduce(
     (sum, asset) => sum + asset.currentPrice * asset.shares,
     0
   );
-  const totalInvested = mockAssets.reduce(
+  const totalInvested = updatedAssets.reduce(
     (sum, asset) => sum + asset.investedAmount,
     0
   );
@@ -93,12 +107,21 @@ const Index = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
+        {/* API Status Alert */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>
+              {error} - Using cached prices as fallback.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <PortfolioSummary
           totalValue={totalValue}
           totalInvested={totalInvested}
           totalGain={totalGain}
           gainPercentage={gainPercentage}
-          assetCount={mockAssets.length}
+          assetCount={updatedAssets.length}
         />
 
         {/* Asset List Header */}
@@ -106,7 +129,9 @@ const Index = () => {
           <div>
             <h2 className="text-2xl font-bold text-foreground">Your Assets</h2>
             <p className="text-muted-foreground">
-              Manage and track all your investments
+              {lastUpdated 
+                ? `Last updated: ${lastUpdated.toLocaleTimeString()}` 
+                : 'Manage and track all your investments'}
             </p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -117,6 +142,15 @@ const Index = () => {
                 className="pl-10 bg-background border-border"
               />
             </div>
+            <Button 
+              variant="outline" 
+              onClick={refreshPrices}
+              disabled={loading}
+              className="shadow-sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
               <Plus className="w-4 h-4 mr-2" />
               Add Asset
@@ -126,19 +160,16 @@ const Index = () => {
 
         {/* Asset Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockAssets.map((asset) => (
-            <AssetCard key={asset.id} asset={asset} />
-          ))}
-        </div>
-
-        {/* API Integration Placeholder */}
-        <div className="mt-8 p-6 border-2 border-dashed border-border rounded-xl text-center">
-          <p className="text-muted-foreground mb-2">
-            Ready for API integration
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Connect to stock price APIs (Alpha Vantage, Yahoo Finance, etc.) to get real-time data
-          </p>
+          {loading && updatedAssets.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading real-time prices...</p>
+            </div>
+          ) : (
+            updatedAssets.map((asset) => (
+              <AssetCard key={asset.id} asset={asset} />
+            ))
+          )}
         </div>
       </main>
     </div>

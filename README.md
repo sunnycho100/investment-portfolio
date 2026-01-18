@@ -2,7 +2,41 @@
 
 ## Project info
 
-A modern portfolio application built with React and TypeScript.
+A modern investment portfolio tracker built with React and TypeScript, featuring real-time stock and cryptocurrency price updates via Alpha Vantage API.
+
+## Features
+
+- 📊 Real-time stock and crypto price tracking
+- 🔄 Auto-refresh and manual refresh capabilities  
+- 💰 Portfolio value calculations with gains/losses
+- 🎨 Modern, responsive UI with shadcn-ui components
+- ⚡ Fast performance with Vite
+
+## Quick Start
+
+### Prerequisites
+- Node.js & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Alpha Vantage API key - [get free key](https://www.alphavantage.co/support/#api-key)
+
+### Setup
+
+```sh
+# Clone the repository
+git clone <YOUR_GIT_URL>
+cd <YOUR_PROJECT_NAME>
+
+# Install dependencies
+npm i
+
+# Configure API key
+# Create .env file and add:
+# VITE_ALPHA_VANTAGE_API_KEY=your_api_key_here
+
+# Start development server
+npm run dev
+```
+
+📚 **For detailed API integration guide, see [API_INTEGRATION.md](API_INTEGRATION.md)**
 
 ## How can I edit this code?
 
