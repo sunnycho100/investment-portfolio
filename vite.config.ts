@@ -6,7 +6,8 @@ import path from "path";
 export default defineConfig({
   server: {
     host: "::",
-    port: 8080,
+    port: 3000,
+    strictPort: false, // Auto-increment port if 3000 is busy
     hmr: {
       overlay: false,
     },
